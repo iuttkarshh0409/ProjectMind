@@ -1,0 +1,40 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+ENV/
+
+# ProjectMind
+.projectmind/
+.projectmind-report.md
+.projectmind-report-*.md
+.agents/
+
+# Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+nosetests.xml
+coverage.xml
+*.cover
+.hypothesis/
+
+# IDEs
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Cloned repositories (ignored locally)
+my-portfolio/
+aeris-v2/
+habit-cadence/
+OrgSync/
+alumconnect-alumassist/
