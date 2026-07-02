@@ -2,115 +2,99 @@
 
 > A localized Change Impact & Review Obligation Engine that maps system dependencies and predicts downstream human review duties before code shifts turn into silent bugs.
 
-ProjectMind is **not** an AI documentation generator, code refactoring assistant, or static linter. Its single mission is to answer one critical question:
-**"I changed X. What else in the project should a human review before assuming the system remains coherent?"**
+---
+
+## 📸 Visual Demos
+
+Below is a visualization of ProjectMind running in a dark-mode terminal environment, organizing and prioritizing review obligations into confidence-coded cards:
+
+![ProjectMind CLI Terminal Demo](assets/projectmind_cli_demo.png)
 
 ---
 
-## ⚡ The ProjectMind Thesis
+## ⚡ Project Description
 
-Every meaningful code modification creates **downstream obligations** elsewhere in the system. While developers are great at identifying direct import chains, they frequently miss implicit or cross-system assumptions (e.g., changing a configuration port that breaks a docker-compose map, updating a validation schema that breaks a database seeder, or altering database parameters that drift away from setup documentation).
+ProjectMind is a developer tool designed to assist software teams in identifying review obligations that arise when code changes are made. 
 
-ProjectMind maps these architectural assertions **deterministically** first, compiles a highly relevant context graph, and leverages LLM-structured reasoning to generate actionable human review checklists.
-
----
-
-## 📐 System Architecture
-
-ProjectMind runs entirely as a local CLI pipeline divided into six decoupled layers:
-
-```
-[Git Diff + Workspace] ──> [Deterministic Heuristics] ──> [Structured Graph Context]
-                                                                 │
-[Actionable Review Cards] <── [Schema Validator] <── [Gemini API (Structured JSON)]
-```
-
-1.  **Layer 1: Repository Scanner:** Deterministically captures active Git diffs and folder files, ignoring caches (`__pycache__`, `.pytest_cache`, `coverage`) and execution reports.
-2.  **Layer 2: Knowledge Extraction:** Employs regex extractors to identify configurations, database settings, class declarations, API routing decorators, and environment variables.
-3.  **Layer 3: Project Knowledge Model:** Maps file metadata and configurations into a semantic layout.
-4.  **Layer 4: Change Analyzer:** Maps Git diff modifications directly to affected entities.
-5.  **Layer 5: Impact Analysis (Deterministic Candidate Finder):** Traverses the knowledge graph to select candidate review files. Matches are categorized and ranked into `HIGH`, `MEDIUM`, and `LOW` confidence bands based on relationship strength (e.g., config maps, shared DB ports, test suites).
-6.  **Layer 6: LLM Review Engine:** Prompts the Gemini API using structured JSON schema configurations to output validated, explanation-rich human review obligations citing explicit file evidence.
+Every meaningful modification in a software project creates **downstream obligations** elsewhere in the codebase. For example, changing a default port value might require updating docker-compose setups, environment templates, or developer documentation. ProjectMind solves this problem by deterministically building a workspace snapshot, traversing configuration and interface connections, and running structured AI-powered analysis to output actionable checklists of what needs human review.
 
 ---
 
-## 🛠️ Installation & Setup
+## 🛠️ Detailed Setup Guide
 
-ProjectMind relies on **`uv`** for fast Python packaging and dependency synchronization.
+Follow these steps to configure and run ProjectMind locally:
 
 ### 1. Prerequisites
-Ensure you have `uv` installed:
-```powershell
-powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
-```
+Ensure you have **Python 3.11+** and the **`uv`** package manager installed.
+*   **Install `uv` (Windows PowerShell):**
+    ```powershell
+    powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+    ```
 
-### 2. Configure Gemini API Key
-Provide your Gemini API token by setting the `GEMINI_API_KEY` environment variable:
-```powershell
-$env:GEMINI_API_KEY="your-gemini-api-key"
-```
+### 2. Configure environment
+Clone this repository and navigate to its root folder. Set the required API key for structured Gemini logic:
+*   **Command Line (PowerShell):**
+    ```powershell
+    $env:GEMINI_API_KEY="your-gemini-api-key"
+    ```
+*   **Command Line (Linux/macOS):**
+    ```bash
+    export GEMINI_API_KEY="your-gemini-api-key"
+    ```
 
----
-
-## 🚀 Usage
-
-Navigate to any Git repository (or the included demo project) and run:
-
+### 3. Run a Review
+Run ProjectMind directly on the active repository using `uv`:
 ```powershell
 uv run projectmind review
 ```
 
-### Output Format
-The console will display color-coded review obligation cards:
+---
 
-```
-==================================================
-REVIEW OBLIGATIONS
-==================================================
+## 🎛️ Technology Summary
 
-[HIGH] Docker Compose port mapping mismatch
-Confidence: HIGH
-Area: Infrastructure Config
-Reason:
-  The application's default PORT has changed from 8080 to 9000. The docker-compose.yml file explicitly maps port 8080. This needs review to ensure the application is accessible and correctly configured within the Docker environment. Verify if the docker-compose.yml should expose port 9000 instead of 8080, or if the application should be configured to run on 8080 when deployed via Docker Compose.
-Evidence:
-  - docker-compose.yml
-```
-
-### Explainability Log
-On every execution, ProjectMind generates a detailed execution report: [`.projectmind-report.md`](file:///d:/ai-agents/examples/demo-project/.projectmind-report.md) in the current running directory. This report documents:
-*   The raw Git diff analyzed.
-*   The full deterministic workspace snapshot table.
-*   Selected candidate files and their scores.
-*   The exact prompt text submitted.
-*   The raw JSON payload returned by the LLM.
-*   Sanitized final review cards.
+ProjectMind is built using a modern, lightweight Python stack:
+*   **Python 3.11+**: Core programming language.
+*   **uv**: Dependency management and fast environment execution.
+*   **FastAPI & Pydantic**: Structured response schema configurations.
+*   **Google GenAI SDK**: Connection wrapper to `gemini-2.5-flash` model.
+*   **Click**: Elegant Command Line Interface routing.
+*   **pytest**: Unit and E2E validation test suites.
 
 ---
 
-## 🧪 Evaluation Repositories
+## 📐 Architecture Highlights
 
-ProjectMind has been validated end-to-end across multiple codebases:
+ProjectMind uses a decoupled six-layer pipeline to map changes to review cards:
 
-*   **`examples/demo-project`:** Purpose-built configuration and port tracking demo.
-*   **`aeris-v2`:** A Python FastAPI telemetry drift analyzer. Testing involved introducing a new Pydantic schema field (`environment`), which ProjectMind successfully linked to SQLite table structures and repository persistence APIs.
-*   **`habit-cadence`:** A Turso/libsql habit tracker. Shifting DB connection strings flagged corresponding seed scripts and data migrations.
-*   **`OrgSync`:** A Node.js/Express task manager. Changing backend configuration ports correctly flagged Docker compose services, Nginx configurations, and Vite React frontend api controllers.
-*   **`alumconnect-alumassist`:** A Groq-integrated career mentor. Modifying FastAPI uvicorn settings flagged corresponding application documents.
+```mermaid
+graph TD
+    Repo[Scanner Layer] -->|Git Diff| Finder[Candidate Finder]
+    Finder -->|Confidence Scores| Context[Context Builder]
+    Context -->|JSON Prompt Schema| LLM[Gemini SDK Engine]
+    LLM -->|Raw Obligations| Validator[Sanitization Layer]
+    Validator -->|Review Cards| Terminal[Terminal Reporter]
+```
+
+*   **Scanner:** Deterministically extracts changed lines from Git diffs, skipping test caches and ProjectMind report files.
+*   **Candidate Finder:** Uses regex heuristics to identify configuration overlaps, database settings, and matching test suites.
+*   **LLM Review Engine:** Prompts the `gemini-2.5-flash` model to analyze the diff against candidate files.
+*   **Validator:** Sanitizes structured JSON against file existence rules, filtering out obligations that lack evidence.
 
 ---
 
-## ⚙️ Development & Testing
+## 🤝 Contribution Guidelines
 
-Run the test suite using pytest via `uv`:
-```powershell
-uv run --with pytest pytest tests/
-```
+We welcome community contributions to improve ProjectMind!
+1.  **Fork the repository** and create a feature branch.
+2.  **Ensure tests pass** before submitting a Pull Request:
+    ```powershell
+    uv run --with pytest pytest tests/
+    ```
+3.  **Adhere to Code Standards**: Follow Python PEP 8 conventions.
+4.  **Document new extractors**: If adding static regex parsers, document the target configurations in the README.
 
-### Project Structure
-*   [`projectmind/models.py`](file:///d:/ai-agents/projectmind/models.py): Internal representations and structured response schemas.
-*   [`projectmind/workspace.py`](file:///d:/ai-agents/projectmind/workspace.py): Git command and directory metadata preprocessing.
-*   [`projectmind/candidate_finder.py`](file:///d:/ai-agents/projectmind/candidate_finder.py): Proximity and configuration key match scores.
-*   [`projectmind/llm_provider.py`](file:///d:/ai-agents/projectmind/llm_provider.py): Gemini structured API interface.
-*   [`projectmind/validator.py`](file:///d:/ai-agents/projectmind/validator.py): Schema sanitization and file presence rules.
-*   [`projectmind/reporter.py`](file:///d:/ai-agents/projectmind/reporter.py): Console formatting.
+---
+
+## 📄 License
+
+This project is licensed under the terms of the MIT License. See the [LICENSE](LICENSE) file for the full license text.
